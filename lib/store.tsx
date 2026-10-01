@@ -19,7 +19,7 @@ import {
   type StatusMitra,
 } from "./data";
 
-const STORAGE_KEY = "prototipe-mitra-v1";
+const STORAGE_KEY = "prototipe-mitra-v2";
 
 type DataState = {
   mitra: Mitra[];

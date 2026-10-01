@@ -15,37 +15,57 @@ import { CheckIcon, CloseIcon } from "./icons";
 type FormState = {
   namaMitra: string;
   jenisMitra: JenisMitra;
-  penanggungJawab: string;
+  nik: string;
   telepon: string;
   email: string;
   alamat: string;
+  perencanaLokasi: string;
   kodeMarketing: string;
+  namaBank: string;
+  nomorRekening: string;
+  jumlahDownPayment: string;
   kodeLokasi: string;
   tanggalClosing: string;
+  namaPameran: string;
   status: StatusMitra;
   catatan: string;
 };
 
-function formKosong(kodeMarketing: string, kodeLokasi: string): FormState {
+function formKosong(kodeLokasi: string): FormState {
   return {
     namaMitra: "",
-    jenisMitra: "Perusahaan",
-    penanggungJawab: "",
+    jenisMitra: "Mandiri",
+    nik: "",
     telepon: "",
     email: "",
     alamat: "",
-    kodeMarketing,
+    perencanaLokasi: "",
+    kodeMarketing: "",
+    namaBank: "",
+    nomorRekening: "",
+    jumlahDownPayment: "",
     kodeLokasi,
     tanggalClosing: new Date().toISOString().slice(0, 10),
+    namaPameran: "",
     status: "Baru",
     catatan: "",
   };
 }
 
+function formatAngka(value: string): string {
+  const digit = value.replace(/\D/g, "");
+  if (!digit) return "";
+  return new Intl.NumberFormat("id-ID").format(Number(digit));
+}
+
+function angkaKeNumber(value: string): number {
+  return Number(value.replace(/\D/g, "")) || 0;
+}
+
 export default function MitraForm({ onSelesai }: { onSelesai: () => void }) {
   const { marketing, lokasi, tambahMitra } = useStore();
   const [form, setForm] = useState<FormState>(() =>
-    formKosong(marketing[0]?.kode ?? "", lokasi[0]?.kode ?? ""),
+    formKosong(lokasi[0]?.kode ?? ""),
   );
   const [error, setError] = useState<Record<string, string>>({});
   const [sukses, setSukses] = useState<string | null>(null);
@@ -63,19 +83,30 @@ export default function MitraForm({ onSelesai }: { onSelesai: () => void }) {
   function validasi(): boolean {
     const err: Record<string, string> = {};
     if (!form.namaMitra.trim()) err.namaMitra = "Nama mitra wajib diisi.";
-    if (!form.penanggungJawab.trim())
-      err.penanggungJawab = "Nama penanggung jawab wajib diisi.";
-    if (!form.telepon.trim()) err.telepon = "Nomor telepon wajib diisi.";
+    if (!form.nik.trim()) {
+      err.nik = "No. NIK wajib diisi.";
+    } else if (!/^\d{16}$/.test(form.nik.replace(/\s/g, ""))) {
+      err.nik = "No. NIK harus 16 digit angka.";
+    }
+    if (!form.telepon.trim()) err.telepon = "No. HP wajib diisi.";
     if (!form.email.trim()) {
       err.email = "Email wajib diisi.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
       err.email = "Format email tidak valid.";
     }
     if (!form.alamat.trim()) err.alamat = "Alamat wajib diisi.";
-    if (!form.kodeMarketing) err.kodeMarketing = "Pilih marketing.";
+    if (!form.perencanaLokasi.trim())
+      err.perencanaLokasi = "Perencana lokasi wajib diisi.";
     if (!form.kodeLokasi) err.kodeLokasi = "Pilih lokasi.";
     if (!form.tanggalClosing)
       err.tanggalClosing = "Tanggal closing wajib diisi.";
+    if (!form.namaPameran.trim())
+      err.namaPameran = "Nama pameran wajib diisi.";
+    if (!form.jumlahDownPayment.trim()) {
+      err.jumlahDownPayment = "Jumlah down payment wajib diisi.";
+    } else if (angkaKeNumber(form.jumlahDownPayment) <= 0) {
+      err.jumlahDownPayment = "Jumlah down payment harus lebih dari 0.";
+    }
     setError(err);
     return Object.keys(err).length === 0;
   }
@@ -90,13 +121,18 @@ export default function MitraForm({ onSelesai }: { onSelesai: () => void }) {
     const input: MitraInput = {
       namaMitra: form.namaMitra.trim(),
       jenisMitra: form.jenisMitra,
-      penanggungJawab: form.penanggungJawab.trim(),
+      nik: form.nik.trim(),
       telepon: form.telepon.trim(),
       email: form.email.trim(),
       alamat: form.alamat.trim(),
+      perencanaLokasi: form.perencanaLokasi.trim(),
       kodeMarketing: form.kodeMarketing,
+      namaBank: form.namaBank.trim(),
+      nomorRekening: form.nomorRekening.trim(),
+      jumlahDownPayment: angkaKeNumber(form.jumlahDownPayment),
       kodeLokasi: form.kodeLokasi,
       tanggalClosing: form.tanggalClosing,
+      namaPameran: form.namaPameran.trim(),
       status: form.status,
       catatan: form.catatan.trim(),
     };
@@ -105,7 +141,7 @@ export default function MitraForm({ onSelesai }: { onSelesai: () => void }) {
     setSukses(
       `Data mitra ${dibuat.namaMitra} berhasil disimpan dengan kode ${dibuat.kodeMitra}.`,
     );
-    setForm(formKosong(marketing[0]?.kode ?? "", lokasi[0]?.kode ?? ""));
+    setForm(formKosong(lokasi[0]?.kode ?? ""));
   }
 
   return (
@@ -170,16 +206,18 @@ export default function MitraForm({ onSelesai }: { onSelesai: () => void }) {
             </select>
           </Field>
 
-          <Field label="Penanggung Jawab" error={error.penanggungJawab} required>
+          <Field label="No. NIK" error={error.nik} required>
             <input
               className={styles.input}
-              value={form.penanggungJawab}
-              onChange={(e) => update("penanggungJawab", e.target.value)}
-              placeholder="Nama PIC mitra"
+              value={form.nik}
+              onChange={(e) => update("nik", e.target.value)}
+              placeholder="16 digit NIK"
+              inputMode="numeric"
+              maxLength={16}
             />
           </Field>
 
-          <Field label="Nomor Telepon" error={error.telepon} required>
+          <Field label="No. HP" error={error.telepon} required>
             <input
               className={styles.input}
               value={form.telepon}
@@ -197,17 +235,56 @@ export default function MitraForm({ onSelesai }: { onSelesai: () => void }) {
             />
           </Field>
 
-          <Field
-            label="Alamat"
-            error={error.alamat}
-            required
-            full
-          >
+          <Field label="Perencana Lokasi" error={error.perencanaLokasi} required>
+            <input
+              className={styles.input}
+              value={form.perencanaLokasi}
+              onChange={(e) => update("perencanaLokasi", e.target.value)}
+              placeholder="Nama perencana lokasi"
+            />
+          </Field>
+
+          <Field label="Alamat" error={error.alamat} required full>
             <input
               className={styles.input}
               value={form.alamat}
               onChange={(e) => update("alamat", e.target.value)}
               placeholder="Jalan, nomor, kota"
+            />
+          </Field>
+
+          <Field label="Nama Bank">
+            <input
+              className={styles.input}
+              value={form.namaBank}
+              onChange={(e) => update("namaBank", e.target.value)}
+              placeholder="Contoh: BCA"
+            />
+          </Field>
+
+          <Field label="No. Rek.">
+            <input
+              className={styles.input}
+              value={form.nomorRekening}
+              onChange={(e) => update("nomorRekening", e.target.value)}
+              placeholder="Nomor rekening"
+              inputMode="numeric"
+            />
+          </Field>
+
+          <Field
+            label="Jumlah Down Payment"
+            error={error.jumlahDownPayment}
+            required
+          >
+            <input
+              className={styles.input}
+              value={form.jumlahDownPayment}
+              onChange={(e) =>
+                update("jumlahDownPayment", formatAngka(e.target.value))
+              }
+              placeholder="Mis. 10.000.000"
+              inputMode="numeric"
             />
           </Field>
         </div>
@@ -217,17 +294,17 @@ export default function MitraForm({ onSelesai }: { onSelesai: () => void }) {
         <header className={styles.cardHead}>
           <h3>2. Marketing &amp; Lokasi</h3>
           <span className={styles.muted}>
-            Kode marketing otomatis menampilkan nama marketing
+            Marketing boleh dikosongkan bila tidak ada
           </span>
         </header>
         <div className={styles.formGrid}>
-          <Field label="Marketing (Kode - Nama)" error={error.kodeMarketing} required>
+          <Field label="Marketing (Kode - Nama)">
             <select
               className={styles.input}
               value={form.kodeMarketing}
               onChange={(e) => update("kodeMarketing", e.target.value)}
             >
-              <option value="">-- Pilih Marketing --</option>
+              <option value="">-- Tanpa Marketing --</option>
               {marketing.map((item) => (
                 <option key={item.kode} value={item.kode}>
                   {item.kode} - {item.nama}
@@ -274,6 +351,20 @@ export default function MitraForm({ onSelesai }: { onSelesai: () => void }) {
             </select>
           </Field>
 
+          <Field
+            label="Nama Pameran"
+            error={error.namaPameran}
+            required
+            full
+          >
+            <input
+              className={styles.input}
+              value={form.namaPameran}
+              onChange={(e) => update("namaPameran", e.target.value)}
+              placeholder="Contoh: Jakarta Property Expo"
+            />
+          </Field>
+
           <Field label="Catatan" full>
             <textarea
               className={styles.textarea}
@@ -291,7 +382,7 @@ export default function MitraForm({ onSelesai }: { onSelesai: () => void }) {
           type="button"
           className={styles.btnGhost}
           onClick={() => {
-            setForm(formKosong(marketing[0]?.kode ?? "", lokasi[0]?.kode ?? ""));
+            setForm(formKosong(lokasi[0]?.kode ?? ""));
             setError({});
             setSukses(null);
           }}

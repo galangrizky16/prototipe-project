@@ -5,7 +5,10 @@ import styles from "@/app/app.module.css";
 import {
   cariLokasi,
   cariMarketing,
+  formatNik,
+  formatRupiah,
   formatTanggal,
+  labelMarketing,
   STATUS_MITRA,
   type Mitra,
   type SortKey,
@@ -58,13 +61,17 @@ export default function MitraTable({ onTambah }: { onTambah: () => void }) {
         item.kodeMitra,
         item.namaMitra,
         item.jenisMitra,
-        item.penanggungJawab,
+        item.nik,
         item.telepon,
         item.email,
+        item.perencanaLokasi,
         item.kodeMarketing,
         marketingNama,
+        item.namaBank,
+        item.nomorRekening,
         item.kodeLokasi,
         lokasiNama,
+        item.namaPameran,
         item.status,
       ]
         .join(" ")
@@ -144,7 +151,7 @@ export default function MitraTable({ onTambah }: { onTambah: () => void }) {
               className={styles.searchInput}
               value={cari}
               onChange={(e) => setCari(e.target.value)}
-              placeholder="Cari nama mitra, PIC, kode, telepon..."
+              placeholder="Cari nama mitra, NIK, kode, telepon..."
             />
           </div>
 
@@ -267,10 +274,10 @@ export default function MitraTable({ onTambah }: { onTambah: () => void }) {
                   <td>
                     <div className={styles.cellMain}>
                       {cariMarketing(marketing, item.kodeMarketing)?.nama ??
-                        item.kodeMarketing}
+                        "Tanpa Marketing"}
                     </div>
                     <div className={styles.cellSub}>
-                      {item.kodeMarketing}
+                      {item.kodeMarketing || "-"}
                     </div>
                   </td>
                   <td>
@@ -338,18 +345,30 @@ export default function MitraTable({ onTambah }: { onTambah: () => void }) {
 
             <div className={styles.modalBody}>
               <DetailRow label="Jenis Mitra" value={detail.jenisMitra} />
-              <DetailRow
-                label="Penanggung Jawab"
-                value={detail.penanggungJawab}
-              />
-              <DetailRow label="Telepon" value={detail.telepon} />
+              <DetailRow label="No. NIK" value={formatNik(detail.nik)} />
+              <DetailRow label="No. HP" value={detail.telepon} />
               <DetailRow label="Email" value={detail.email} />
               <DetailRow label="Alamat" value={detail.alamat} />
               <DetailRow
+                label="Perencana Lokasi"
+                value={detail.perencanaLokasi || "-"}
+              />
+              <DetailRow label="Nama Bank" value={detail.namaBank || "-"} />
+              <DetailRow
+                label="No. Rek."
+                value={detail.nomorRekening || "-"}
+              />
+              <DetailRow
+                label="Jumlah Down Payment"
+                value={formatRupiah(detail.jumlahDownPayment)}
+              />
+              <DetailRow
                 label="Marketing"
-                value={`${detail.kodeMarketing} - ${
-                  cariMarketing(marketing, detail.kodeMarketing)?.nama ?? "-"
-                }`}
+                value={
+                  detail.kodeMarketing
+                    ? labelMarketing(marketing, detail.kodeMarketing)
+                    : "Tanpa Marketing"
+                }
               />
               <DetailRow
                 label="Lokasi"
@@ -360,6 +379,10 @@ export default function MitraTable({ onTambah }: { onTambah: () => void }) {
               <DetailRow
                 label="Tanggal Closing"
                 value={formatTanggal(detail.tanggalClosing)}
+              />
+              <DetailRow
+                label="Nama Pameran"
+                value={detail.namaPameran || "-"}
               />
               <DetailRow
                 label="Diinput"
